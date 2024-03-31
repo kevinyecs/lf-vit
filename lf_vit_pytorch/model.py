@@ -158,3 +158,38 @@ class SwiGLU(nn.Module):
     def forward(self, x):
         u, v = torch.chunk(self.uv_proj(x), 2, dim = -1)
         return self.out_proj(self.act(u) * v)
+
+class TransformerBlock(nn.Module):
+    """
+    LF-ViT Block
+
+    Description
+    """
+    
+    def __init__(self, config: Config):
+        super().__init__()
+        self.dim = config.d_model
+
+        self.fft = FFT2D()
+        self.attn = XAttn(
+            dim = config.d_model,
+            n_heads = config.n_heads
+        )
+        self.ffn = SwiGLU(
+            dim = config.d_model,
+            exp_factor = config.ffn_dim_mult
+        )
+
+        self.attn_norm = RMSNorm(config.d_model, eps = config.norm_eps)
+        self.ffn_norm = RMSNorm(config.d_model, eps = config.norm_eps)
+
+    def forward(self, x: torch.Tensor):
+        x = self.fft(x)
+
+        x_norm = self.attn_norm(x)
+        x = self.attn(x_norm) + x
+
+        x_norm = self.ffn_norm(x)
+        x = self.ffn(x_norm) + x
+
+        return x
