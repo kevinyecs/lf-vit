@@ -129,3 +129,32 @@ class XAttn(nn.Module):
         o = rearrange(o, 'b h n d -> b n h d')
 
         return self.o_proj(o)
+
+class SwiGLU(nn.Module):
+    """
+    Swish Gated Linear Unit (SwiGLU)
+    https://arxiv.org/pdf/2002.05202v1.pdf
+
+    This can be through of as a multiplicative skip connection
+    which helps gradients flow across the layers.
+
+    Args:
+        dim (int): Input dimension size.
+        exp_factor (float): Hidden dimension multiplier. Defaults to 2.
+    """
+
+    def __init__(self,
+                 dim: int,
+                 exp_factor: Optional[int] = 2):
+        super().__init__()
+        self.dim = dim
+        self.exp_factor = exp_factor
+
+        hidden_dim = dim * exp_factor
+        self.uv_proj = nn.Linear(dim, hidden_dim * 2, bias = False)
+        self.out_proj = nn.Linear(hidden_dim, dim, bias = False)
+        self.act = nn.SiLU()
+
+    def forward(self, x):
+        u, v = torch.chunk(self.uv_proj(x), 2, dim = -1)
+        return self.out_proj(self.act(u) * v)
