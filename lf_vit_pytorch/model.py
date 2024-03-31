@@ -96,3 +96,36 @@ class FFT2D(nn.Module):
 
     def forward(self, x):
         return torch.fft.fft(torch.fft.fft(x, dim = -1), dim = -2).real
+
+class XAttn(nn.Module):
+    """
+    Cross Attention (XAttn)
+
+    Description
+    """
+
+    def __init__(self,
+                 dim: int,
+                 n_heads: int):
+        super().__init__()
+        self.head_dim = dim // n_heads
+
+        self.q_proj = nn.Linear(dim, self.head_dim * n_heads, bias = True)
+        self.k_proj = nn.Linear(dim, self.head_dim * n_heads, bias = True)
+        self.v_proj = nn.Linear(dim, self.head_dim * n_heads, bias = True)
+        self.o_proj = nn.Linear(self.head_dim * n_heads, dim, bias = True)
+
+    def forward(self, x1, x2):
+        q, k, v = self.q_proj(x1), self.k_proj(x2), self.v_proj(x2)
+
+        q = rearrange(q, 'b n h d -> b h n d', h = self.head_dim)
+        k = rearrange(k, 'b n h d -> b h n d', h = self.head_dim)
+        v = rearrange(v, 'b n h d -> b h n d', h = self.head_dim)
+
+        scores = einsum(q, k, 'b h n d, b h m d -> b h n m')
+        attention = F.softmax(scores / math.sqrt(self.head_dim), dim = -1)
+
+        o = einsum(attention, v, 'b h n d, b h n m -> b h m d')
+        o = rearrange(o, 'b h n d -> b n h d')
+
+        return self.o_proj(o)
