@@ -47,3 +47,52 @@ class Config():
         self.ffn_dim_mult = ffn_dim_mult
         self.n_heads = n_heads
         self.norm_eps = norm_eps
+
+class RMSNorm(nn.Module):
+    """
+    Root Mean Square Layer Normalization (RMSNorm)
+    https://arxiv.org/pdf/1910.07467.pdf
+
+    A well-known explanation of the success of LayerNorm is its re-centering
+    and re-scaling invariance property. However RMSNorm only focuses on
+    re-scaling invariance and regularizes the summed inputs simply according
+    to the root mean square statistic.
+
+    Intuitively, RMSNorm simplifies LayerNorm by totally removing the
+    mean statistic at the cost of sacrificing the invariance that mean
+    normalization affords.
+
+    Args:
+        dim (int): The dimension of the input tensor.
+        eps (float, optional): A small value added to the denominator for numerical stability. Default is 1e-6.
+
+    References:
+        https://github.com/facebookresearch/llama (Credit)
+    """
+
+    def __init__(self, dim: int, eps: Optional[float] = 1e-6):
+        super().__init__()
+        self.eps = eps
+        self.scale = nn.Parameter(torch.ones(dim))
+
+    def _norm(self, x):
+        return x * torch.rsqrt(x.pow(2).mean(-1, keepdim=True) + self.eps)
+
+    def forward(self, x):
+        x = self._norm(x.float()).to(x.dtype)
+        return self.scale * x
+
+class FFT2D(nn.Module):
+    """
+    Fast-Fourier Transform 2D (FFT2D)
+    https://arxiv.org/pdf/2105.03824.pdf
+
+    Description
+
+    """
+
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, x):
+        return torch.fft.fft(torch.fft.fft(x, dim = -1), dim = -2).real
