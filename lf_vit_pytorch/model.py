@@ -159,7 +159,7 @@ class SwiGLU(nn.Module):
         u, v = torch.chunk(self.uv_proj(x), 2, dim = -1)
         return self.out_proj(self.act(u) * v)
 
-class TransformerBlock(nn.Module):
+class LFViTBlock(nn.Module):
     """
     LF-ViT Block
 
