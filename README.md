@@ -1,3 +1,13 @@
+# LF-ViT - PyTorch
+Latent Fourier Vision Transformer (PyTorch implementation) from the paper ...
+
+Small Description...
+
+About key idea...
+
+> [!WARNING]
+> This repository is under development, so expect changes regulary but please feel free to explore and provide any feedback or suggestions you may have. :construction:
+
 <img src="./images/vit.gif" width="500px"></img>
 
 ## Table of Contents
