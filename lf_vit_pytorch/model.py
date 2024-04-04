@@ -3,6 +3,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.checkpoint import checkpoint as cp
 
 from einops import einsum, rearrange
 from einops.layers.torch import Rearrange
@@ -219,3 +220,78 @@ class LFViTBlock(nn.Module):
         x = self.ffn(x_norm) + x
 
         return x
+
+class LFViT(nn.Module):
+    """
+    Latent Fourier Vision Transformer (LFViT)
+
+    LF-ViT combines the idea of the latent representation form the paper
+    PerceiverIO (https://arxiv.org/pdf/2107.14795.pdf) and FNET's 2D FFT
+    to replace Self-Attention.
+
+    The original image is downscaled (scaled_image) and processed by the
+    model and when it reaches the Cross-Attention will be fused with the
+    original non-scaled image embeddings. This way we eliminate the need
+    of huge embedding vectors and enable a significant inference speed up.
+
+    Args:
+        pixel_values (torch.Tensor of shape (batch_size, num_channels, height, width))
+            Pixel value of the original from the image_preprocessor.
+            
+        scaled_pixel_values (torch.Tensor of shape (batch_size, num_channels, height // ratio, width // ratio))
+            Pixel values of the downscaled image from the image processor.
+
+    Usage:
+        model = ...
+        
+        pixel_values = image_processor(image, ...)['pixel_values']
+        scaled_pixel_values = image_processor(image, size = {'height': 224 // ratio, 'width': 224 // ratio, ...})['pixel_values']
+
+        y = model(pixel_values, scaled_pixel_values)
+    """
+
+    def __init__(self, config: Config):
+        super().__init__()
+        self.model_config = config
+        self.n_labels = config.n_labels
+        self.depth = config.depth
+
+        self.to_patch = nn.Sequential(
+            Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1 = config.patch_dim, p2 = config.patch_dim),
+            RMSNorm(config.patch_dim * config.patch_dim * 3),
+            nn.Linear(config.patch_dim * config.patch_dim * 3, config.d_model),
+            RMSNorm(config.d_model)
+        )
+
+        latent_patch_dim = config.patch_dim // config.downscale_ratio
+        latent_dim = config.d_model // config.downscale_ratio
+        self.to_latent = nn.Sequential(
+            Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1 = latent_patch_dim, p2 = latent_patch_dim),
+            RMSNorm(latent_patch_dim * latent_patch_dim * 3),
+            nn.Linear(latent_patch_dim * latent_patch_dim * 3, latent_dim),
+            RMSNorm(latent_dim)
+        )
+
+        self.blocks = nn.ModuleList([ LFViTBlock(config) for _ in range(config.depth) ])
+        self.norm = RMSNorm(dim = config.d_model // config.downscale_ratio)
+        self.to_labels = nn.Linear(config.d_model // config.downscale_ratio, config.n_labels, bias = False)
+
+        self.gradient_checkpointing = False
+
+    def forward(self,
+                pixel_values: torch.Tensor,
+                scaled_pixel_values: torch.Tensor):
+                    
+        pixel_values = self.to_patch(pixel_values)
+        x = self.to_latent(scaled_pixel_values)
+
+        for block in self.blocks:
+            if self.gradient_checkpointing:
+                x = cp(block, x, pixel_values, use_reentrant = False)
+            else
+                x = block(x, pixel_values)
+            
+        x = self.norm(x)
+        x = self.to_labels(x)
+
+        return x.mean(dim = -2)
