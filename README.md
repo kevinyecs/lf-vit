@@ -14,6 +14,11 @@ Install through `pip`
 !pip install git+https://github.com/kevinyecs/lf-vit.git
 ```
 
+## Roadmap
+- [ ] ViT (for comparisons) train script on cifar100
+- [ ] LF-ViT (for comparisons) train script on cifar100
+- [ ] Add RoPE2D
+
 <img src="./images/vit.gif" width="500px"></img>
 
 ## Table of Contents
