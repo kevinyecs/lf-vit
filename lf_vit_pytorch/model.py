@@ -1,6 +1,11 @@
+import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from einops import einsum, rearrange
+from einops.layers.torch import Rearrange
 
 from typing import Optional
 
@@ -9,11 +14,14 @@ class Config():
     LF-ViT Configuration class
 
     Args:
-        n_classes (int, defaults to 1)
-            Defines the number of different classes for images.
+        n_labels (int, defaults to 1)
+            Defines the number of different classes/labels for images.
 
         downscale_ratio (int, defaults to 4)
             Image downscale ratio, it will decide the latent image size.
+
+        patch_dim (int, defaults to 16)
+            Defines the fixed-size patch dimension on which to split the image.
 
         d_model (int, defaults to 512)
             Dimension of the patch embedding representation.
@@ -32,16 +40,18 @@ class Config():
     """
 
     def __init__(self,
-                 n_classes: int = 1,
+                 n_labels: int = 1,
                  downscale_ratio: int = 4,
+                 patch_dim: int = 16,
                  d_model: int = 512,
                  depth: int = 1,
                  ffn_dim_mult: int = 2,
                  n_heads: int = 8,
                  norm_eps: float = 1e-5):
         
-        self.n_classes = n_classes
+        self.n_labels = n_labels
         self.downscale_ratio = downscale_ratio
+        self.patch_dim = patch_dim
         self.d_model = d_model
         self.depth = depth
         self.ffn_dim_mult = ffn_dim_mult
@@ -50,7 +60,7 @@ class Config():
 
 class RMSNorm(nn.Module):
     """
-    Root Mean Square Layer Normalization (RMSNorm)
+    Root Mean Square Normalization (RMSNorm)
     https://arxiv.org/pdf/1910.07467.pdf
 
     A well-known explanation of the success of LayerNorm is its re-centering
@@ -87,8 +97,8 @@ class FFT2D(nn.Module):
     Fast-Fourier Transform 2D (FFT2D)
     https://arxiv.org/pdf/2105.03824.pdf
 
-    Description
-
+    Decomposes a function into its constituent frequencies. Applies a
+    2D FFT to the embeddings vectors (batch_size, seq_len, emb_dim).
     """
 
     def __init__(self):
@@ -101,32 +111,39 @@ class XAttn(nn.Module):
     """
     Cross Attention (XAttn)
 
-    Description
+    Cross-Attention mixes or combines asymmetrically two separate embedding
+    sequence. One of the sequences serves as a query input, while the other
+    as a key and value inputs.
+
+    References:
+        https://vaclavkosar.com/ml/cross-attention-in-transformer-architecture (Description)
     """
 
     def __init__(self,
                  dim: int,
+                 other_dim: int,
                  n_heads: int):
         super().__init__()
-        self.head_dim = dim // n_heads
+        self.head_dim = other_dim // n_heads
+        self.n_heads = n_heads
 
-        self.q_proj = nn.Linear(dim, self.head_dim * n_heads, bias = True)
-        self.k_proj = nn.Linear(dim, self.head_dim * n_heads, bias = True)
-        self.v_proj = nn.Linear(dim, self.head_dim * n_heads, bias = True)
-        self.o_proj = nn.Linear(self.head_dim * n_heads, dim, bias = True)
+        self.q_proj = nn.Linear(dim, self.head_dim * n_heads, bias = False)
+        self.k_proj = nn.Linear(other_dim, self.head_dim * n_heads, bias = False)
+        self.v_proj = nn.Linear(other_dim, self.head_dim * n_heads, bias = False)
+        self.o_proj = nn.Linear(self.head_dim * n_heads, dim, bias = False)
 
     def forward(self, x1, x2):
         q, k, v = self.q_proj(x1), self.k_proj(x2), self.v_proj(x2)
 
-        q = rearrange(q, 'b n h d -> b h n d', h = self.head_dim)
-        k = rearrange(k, 'b n h d -> b h n d', h = self.head_dim)
-        v = rearrange(v, 'b n h d -> b h n d', h = self.head_dim)
+        q = rearrange(q, 'b n (h d) -> b h n d', h = self.n_heads)
+        k = rearrange(k, 'b n (h d) -> b h n d', h = self.n_heads)
+        v = rearrange(v, 'b n (h d) -> b h n d', h = self.n_heads)
 
         scores = einsum(q, k, 'b h n d, b h m d -> b h n m')
         attention = F.softmax(scores / math.sqrt(self.head_dim), dim = -1)
 
-        o = einsum(attention, v, 'b h n d, b h n m -> b h m d')
-        o = rearrange(o, 'b h n d -> b n h d')
+        o = einsum(attention, v, 'b h n m, b h m d -> b h n d')
+        o = rearrange(o, 'b h n d -> b n (h d)')
 
         return self.o_proj(o)
 
@@ -161,30 +178,39 @@ class SwiGLU(nn.Module):
 
 class LFViTBlock(nn.Module):
     """
-    LF-ViT Block
+    Latent Fourier Vision Transformer Block (LF-ViT Block)
 
-    Description
+    A block built upon the the listed modules below:
+        1. FFT2D
+        2. Cross-Attention
+        3. SwiGLU
+
+    Each with Residual Connections.
+    (2. and 3. with Pre-normalized with RMSNorm)
     """
     
     def __init__(self, config: Config):
         super().__init__()
-        self.dim = config.d_model
+
+        ## This will be the downscaled embedding dimension.
+        self.dim = config.d_model // config.downscale_ratio
 
         self.fft = FFT2D()
         self.attn = XAttn(
-            dim = config.d_model,
+            dim = dim,
+            other_dim = config.d_model,
             n_heads = config.n_heads
         )
         self.ffn = SwiGLU(
-            dim = config.d_model,
+            dim = dim,
             exp_factor = config.ffn_dim_mult
         )
 
-        self.attn_norm = RMSNorm(config.d_model, eps = config.norm_eps)
-        self.ffn_norm = RMSNorm(config.d_model, eps = config.norm_eps)
+        self.attn_norm = RMSNorm(dim, eps = config.norm_eps)
+        self.ffn_norm = RMSNorm(dim, eps = config.norm_eps)
 
     def forward(self, x: torch.Tensor):
-        x = self.fft(x)
+        x = self.fft(x) + x
 
         x_norm = self.attn_norm(x)
         x = self.attn(x_norm) + x
