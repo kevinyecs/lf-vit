@@ -293,7 +293,7 @@ class LFViT(nn.Module):
                 x = block(x, pixel_values)
             
         x = self.norm(x)
-        x = self.pooler(x)
+        x = self.pooler(x).flatten(start_dim = 1)
         x = self.to_labels(x)
 
         return x
