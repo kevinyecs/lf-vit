@@ -274,6 +274,7 @@ class LFViT(nn.Module):
 
         self.blocks = nn.ModuleList([ LFViTBlock(config) for _ in range(config.depth) ])
         self.norm = RMSNorm(dim = config.d_model // config.downscale_ratio)
+        self.pooler = nn.AdaptiveAvgPool1d(1)
         self.to_labels = nn.Linear(config.d_model // config.downscale_ratio, config.n_labels, bias = False)
 
         self.gradient_checkpointing = False
@@ -292,6 +293,7 @@ class LFViT(nn.Module):
                 x = block(x, pixel_values)
             
         x = self.norm(x)
+        x = self.pooler(x)
         x = self.to_labels(x)
 
-        return x.mean(dim = -2)
+        return x
