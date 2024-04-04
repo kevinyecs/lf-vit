@@ -8,6 +8,12 @@ About key idea...
 > [!WARNING]
 > This repository is under development, so expect changes regulary but please feel free to explore and provide any feedback or suggestions you may have. :construction:
 
+## Install
+Install through `pip`
+```shell
+!pip install git+https://github.com/kevinyecs/lf-vit.git
+```
+
 <img src="./images/vit.gif" width="500px"></img>
 
 ## Table of Contents
