@@ -194,7 +194,7 @@ class LFViTBlock(nn.Module):
         super().__init__()
 
         ## This will be the downscaled embedding dimension.
-        self.dim = config.d_model // config.downscale_ratio
+        dim = config.d_model // config.downscale_ratio
 
         self.fft = FFT2D()
         self.attn = XAttn(
