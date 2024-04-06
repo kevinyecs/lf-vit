@@ -289,7 +289,7 @@ class LFViT(nn.Module):
         for block in self.blocks:
             if self.gradient_checkpointing:
                 x = cp(block, x, pixel_values, use_reentrant = False)
-            else
+            else:
                 x = block(x, pixel_values)
             
         x = self.norm(x)
