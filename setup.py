@@ -20,7 +20,6 @@ setup(
         'latent image representation'
     ],
     install_requires = [
-        'torch',
         'einops'
     ],
     classifiers = [
