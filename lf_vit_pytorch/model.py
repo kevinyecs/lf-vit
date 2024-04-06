@@ -210,11 +210,11 @@ class LFViTBlock(nn.Module):
         self.attn_norm = RMSNorm(dim, eps = config.norm_eps)
         self.ffn_norm = RMSNorm(dim, eps = config.norm_eps)
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor, original: torch.Tensor):
         x = self.fft(x) + x
 
         x_norm = self.attn_norm(x)
-        x = self.attn(x_norm) + x
+        x = self.attn(x_norm, original) + x
 
         x_norm = self.ffn_norm(x)
         x = self.ffn(x_norm) + x
@@ -283,14 +283,14 @@ class LFViT(nn.Module):
                 pixel_values: torch.Tensor,
                 scaled_pixel_values: torch.Tensor):
                     
-        pixel_values = self.to_patch(pixel_values)
+        original = self.to_patch(pixel_values)
         x = self.to_latent(scaled_pixel_values)
 
         for block in self.blocks:
             if self.gradient_checkpointing:
-                x = cp(block, x, pixel_values, use_reentrant = False)
+                x = cp(block, x, original, use_reentrant = False)
             else:
-                x = block(x, pixel_values)
+                x = block(x, original)
             
         x = self.norm(x)
         x = self.pooler(x).flatten(start_dim = 1)
