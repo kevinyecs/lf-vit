@@ -27,15 +27,16 @@ class PrepareForTrainer(nn.Module):
             https://pytorch.org/docs/stable/generated/torch.nn.functional.interpolate.html
     """
 
-    def __init__(self, model, classification_type: str):
+    def __init__(self, model):
         super().__init__()
         self.model = model
-        self.classification_type = classification_type
         self.interpolate_mode = 'nearest'
 
-        if classification_type == 'binary':
+        if model.n_labels == 1:
+            self.classification_type = 'binary'
             self.loss_fn = nn.BCEWithLogitsLoss()
-        elif classification_type == 'multiclass':
+        elif model.n_labels > 1:
+            self.classification_type = 'multiclass'
             self.loss_fn = nn.CrossEntropyLoss()
 
     def forward(self,
