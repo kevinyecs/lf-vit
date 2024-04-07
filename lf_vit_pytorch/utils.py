@@ -39,18 +39,11 @@ class PrepareForTrainer(nn.Module):
             self.classification_type = 'multiclass'
             self.loss_fn = nn.CrossEntropyLoss()
 
-    def compute_loss(self, logits, labels)
-        if model.n_labels == 1:
-            self.classification_type = 'binary'
-            self.loss_fn = nn.BCEWithLogitsLoss()
-            loss = loss_fct(logits, labels)
-        elif model.n_labels > 1:
-            self.classification_type = 'multiclass'
-            self.loss_fn = nn.CrossEntropyLoss()
-            loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
-
-        return loss
-            
+    def compute_loss(self, logits, labels):
+        if self.classification_type = 'binary':  
+            return loss_fct(logits, labels)
+        elif self.classification_type = 'multiclass':
+            return loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
     
     def forward(self,
                 pixel_values: torch.Tensor,
