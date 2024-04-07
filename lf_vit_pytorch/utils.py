@@ -27,7 +27,7 @@ class PrepareForTrainer(nn.Module):
             https://pytorch.org/docs/stable/generated/torch.nn.functional.interpolate.html
     """
 
-    def __init__(self, model, classification_type: string):
+    def __init__(self, model, classification_type: str):
         super().__init__()
         self.model = model
         self.classification_type = classification_type
