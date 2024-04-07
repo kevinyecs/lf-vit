@@ -41,9 +41,9 @@ class PrepareForTrainer(nn.Module):
 
     def compute_loss(self, logits, labels):
         if self.classification_type == 'binary':  
-            return self.loss_fn(logits.long(), labels)
+            return self.loss_fn(logits, labels.float())
         elif self.classification_type == 'multiclass':
-            return self.loss_fn(logits.float().view(-1, self.model.n_labels), labels.view(-1))
+            return self.loss_fn(logits.view(-1, self.model.n_labels), labels.view(-1))
     
     def forward(self,
                 pixel_values: torch.Tensor,
@@ -56,5 +56,5 @@ class PrepareForTrainer(nn.Module):
         logits = self.model(pixel_values, scaled_pixel_values)
         return {
             'logits': logits,
-            'loss': self.compute_loss(logits, labels)
+            'loss': self.compute_loss(logits.float(), labels)
         }
