@@ -14,6 +14,17 @@ Install through `pip`
 !pip install git+https://github.com/kevinyecs/lf-vit.git
 ```
 
+## Usage
+```python
+from lf_vit_pytorch import LFViT, Config
+
+config = Config(
+    n_labels = 4
+)
+
+model = LFViT(config)
+```
+
 ## Roadmap
 - [ ] ViT (for comparisons) train script on cifar100
 - [ ] LF-ViT (for comparisons) train script on cifar100
