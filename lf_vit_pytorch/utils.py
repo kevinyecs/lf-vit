@@ -40,9 +40,9 @@ class PrepareForTrainer(nn.Module):
             self.loss_fn = nn.CrossEntropyLoss()
 
     def compute_loss(self, logits, labels):
-        if self.classification_type = 'binary':  
+        if self.classification_type == 'binary':  
             return self.loss_fn(logits, labels)
-        elif self.classification_type = 'multiclass':
+        elif self.classification_type == 'multiclass':
             return self.loss_fn(logits.view(-1, self.n_labels), labels.view(-1))
     
     def forward(self,
