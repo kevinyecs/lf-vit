@@ -56,4 +56,5 @@ class PrepareForTrainer(nn.Module):
         logits = self.model(pixel_values, scaled_pixel_values)
         return {
             'logits': logits,
+            'loss': self.compute_loss(logits, labels)
         }
