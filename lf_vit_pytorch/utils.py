@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from typing import Optional
+
 class PrepareForTrainer(nn.Module):
     """
     To make the model compatible with HuggingFace's Trainer the model should
@@ -47,11 +49,13 @@ class PrepareForTrainer(nn.Module):
     
     def forward(self,
                 pixel_values: torch.Tensor,
-                labels: torch.Tensor):
+                labels: torch.Tensor,
+                scaled_pixel_values: Optional[torch.Tensor] = None):
         
-        scale_ratio = self.model.model_config.downscale_ratio
-        scaled_shape = (pixel_values.shape[-2] // scale_ratio, pixel_values.shape[-1] // scale_ratio)
-        scaled_pixel_values = F.interpolate(pixel_values, size = scaled_shape, mode = self.interpolate_mode)
+        if scaled_pixel_values is None:
+            scale_ratio = self.model.model_config.downscale_ratio
+            scaled_shape = (pixel_values.shape[-2] // scale_ratio, pixel_values.shape[-1] // scale_ratio)
+            scaled_pixel_values = F.interpolate(pixel_values, size = scaled_shape, mode = self.interpolate_mode)
 
         logits = self.model(pixel_values, scaled_pixel_values)
         return {
