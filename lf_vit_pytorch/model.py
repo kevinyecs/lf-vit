@@ -30,7 +30,7 @@ class Config():
         depth (int, defaults to 1)
             Number of blocks the model built upon.
 
-        ffn_dim_mult (int, defaults to 2)
+        ffn_dim_mult (int, defaults to 4)
             SwiGLU hidden dimension multiplier (defaults to d_model * ffn_dim_mult)
 
         n_heads (int, defaults to 8)
@@ -46,7 +46,7 @@ class Config():
                  patch_dim: int = 16,
                  d_model: int = 512,
                  depth: int = 1,
-                 ffn_dim_mult: int = 2,
+                 ffn_dim_mult: int = 4,
                  n_heads: int = 8,
                  norm_eps: float = 1e-5):
         
