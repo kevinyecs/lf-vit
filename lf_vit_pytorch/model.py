@@ -46,7 +46,7 @@ class Config():
                  patch_dim: int = 16,
                  d_model: int = 512,
                  depth: int = 1,
-                 ffn_dim_mult: int = 4,
+                 ffn_dim_mult: int = 8,
                  n_heads: int = 8,
                  norm_eps: float = 1e-5):
         
