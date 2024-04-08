@@ -50,11 +50,14 @@ class PrepareForTrainer(nn.Module):
     def forward(self,
                 pixel_values: torch.Tensor,
                 labels: torch.Tensor,
-                scaled_pixel_values: Optional[torch.Tensor] = None):
-        
-        if scaled_pixel_values is None:
-            scale_ratio = self.model.model_config.downscale_ratio
-            scaled_shape = (pixel_values.shape[-2] // scale_ratio, pixel_values.shape[-1] // scale_ratio)
+                negative_pixel_values: Optional[torch.Tensor] = None):
+
+        scale_ratio = self.model.model_config.downscale_ratio
+        scaled_shape = (pixel_values.shape[-2] // scale_ratio, pixel_values.shape[-1] // scale_ratio)
+                    
+        if negative_pixel_values is None:
+            scaled_pixel_values = F.interpolate(negative_pixel_values, size = scaled_shape, mode = self.interpolate_mode)
+        else:
             scaled_pixel_values = F.interpolate(pixel_values, size = scaled_shape, mode = self.interpolate_mode)
 
         logits = self.model(pixel_values, scaled_pixel_values)
