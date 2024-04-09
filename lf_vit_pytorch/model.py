@@ -218,12 +218,12 @@ class LFViTBlock(nn.Module):
         
         x_norm = self.attn_norm(x)
         cross_x = self.cross_norm(original)
-        x = self.attn(x_norm, cross_x) + x
+        x = self.attn(x_norm, cross_x) 
         print('Attn: ')
         print(x)
         
         x_norm = self.ffn_norm(x)
-        x = self.ffn(x_norm) + x
+        x = self.ffn(x_norm)
         print('GLU: ')
         print(x)
 
