@@ -281,7 +281,7 @@ class LFViT(nn.Module):
         )
 
         self.blocks = nn.ModuleList([ LFViTBlock(config) for _ in range(config.depth) ])
-        self.norm = nn.LayerNorm(dim = config.d_model // config.downscale_ratio)
+        self.norm = nn.LayerNorm(config.d_model // config.downscale_ratio)
         self.to_labels = nn.Linear(config.d_model // config.downscale_ratio, config.n_labels, bias = False)
 
         self.gradient_checkpointing = False
