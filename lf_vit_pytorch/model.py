@@ -207,9 +207,9 @@ class LFViTBlock(nn.Module):
             exp_factor = config.ffn_dim_mult
         )
 
-        self.attn_norm = RMSNorm(dim, eps = config.norm_eps)
-        self.cross_norm = RMSNorm(config.d_model, eps = config.norm_eps)
-        self.ffn_norm = RMSNorm(dim, eps = config.norm_eps)
+        self.attn_norm = nn.LayerNorm(dim, eps = config.norm_eps)
+        self.cross_norm = nn.LayerNorm(config.d_model, eps = config.norm_eps)
+        self.ffn_norm = nn.LayerNorm(dim, eps = config.norm_eps)
 
     def forward(self, x: torch.Tensor, original: torch.Tensor):
         x = self.fft(x)
@@ -266,22 +266,22 @@ class LFViT(nn.Module):
 
         self.to_patch = nn.Sequential(
             Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1 = config.patch_dim, p2 = config.patch_dim),
-            RMSNorm(config.patch_dim * config.patch_dim * 3),
+            nn.LayerNorm(config.patch_dim * config.patch_dim * 3),
             nn.Linear(config.patch_dim * config.patch_dim * 3, config.d_model),
-            RMSNorm(config.d_model)
+            nn.LayerNorm(config.d_model)
         )
 
         latent_patch_dim = config.patch_dim // config.downscale_ratio
         latent_dim = config.d_model // config.downscale_ratio
         self.to_latent = nn.Sequential(
             Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1 = latent_patch_dim, p2 = latent_patch_dim),
-            RMSNorm(latent_patch_dim * latent_patch_dim * 3),
+            nn.LayerNorm(latent_patch_dim * latent_patch_dim * 3),
             nn.Linear(latent_patch_dim * latent_patch_dim * 3, latent_dim),
-            RMSNorm(latent_dim)
+            nn.LayerNorm(latent_dim)
         )
 
         self.blocks = nn.ModuleList([ LFViTBlock(config) for _ in range(config.depth) ])
-        self.norm = RMSNorm(dim = config.d_model // config.downscale_ratio)
+        self.norm = nn.LayerNorm(dim = config.d_model // config.downscale_ratio)
         self.to_labels = nn.Linear(config.d_model // config.downscale_ratio, config.n_labels, bias = False)
 
         self.gradient_checkpointing = False
