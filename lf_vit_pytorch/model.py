@@ -269,7 +269,6 @@ class LFViT(nn.Module):
             RMSNorm(config.patch_dim * config.patch_dim * 3),
             nn.Linear(config.patch_dim * config.patch_dim * 3, config.d_model),
             nn.Tanh(),
-            nn.Linear(config.patch_dim * config.patch_dim * 3, config.d_model),
             RMSNorm(config.d_model)
         )
 
@@ -280,7 +279,6 @@ class LFViT(nn.Module):
             RMSNorm(latent_patch_dim * latent_patch_dim * 3),
             nn.Linear(latent_patch_dim * latent_patch_dim * 3, latent_dim),
             nn.Tanh(),
-            nn.Linear(latent_patch_dim * latent_patch_dim * 3, latent_dim),
             RMSNorm(latent_dim)
         )
 
