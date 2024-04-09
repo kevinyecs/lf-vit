@@ -141,7 +141,8 @@ class XAttn(nn.Module):
         v = rearrange(v, 'b n (h d) -> b h n d', h = self.n_heads)
 
         scores = einsum(q, k, 'b h n d, b h m d -> b h n m')
-        attention = F.softmax(scores / math.sqrt(self.head_dim), dim = -1)
+        #attention = F.softmax(scores / math.sqrt(self.head_dim), dim = -1)
+        attention = F.softmax(scores / self.head_dim, dim = -1)
 
         o = einsum(attention, v, 'b h n m, b h m d -> b h n d')
         o = rearrange(o, 'b h n d -> b n (h d)')
