@@ -19,7 +19,8 @@ Install through `pip`
 from lf_vit_pytorch import LFViT, Config
 
 config = Config(
-    n_labels = 4
+    n_labels = 100,
+    downscale_ratio = 4
 )
 
 model = LFViT(config)
