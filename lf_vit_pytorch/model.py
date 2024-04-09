@@ -213,13 +213,19 @@ class LFViTBlock(nn.Module):
 
     def forward(self, x: torch.Tensor, original: torch.Tensor):
         x = self.fft(x)
-
+        print('FFT: ')
+        print(x)
+        
         x_norm = self.attn_norm(x)
         cross_x = self.cross_norm(original)
         x = self.attn(x_norm, cross_x) + x
-
+        print('Attn: ')
+        print(x)
+        
         x_norm = self.ffn_norm(x)
         x = self.ffn(x_norm) + x
+        print('GLU: ')
+        print(x)
 
         return x
 
