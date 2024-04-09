@@ -269,7 +269,7 @@ class LFViT(nn.Module):
             RMSNorm(config.patch_dim * config.patch_dim * 3),
             nn.Linear(config.patch_dim * config.patch_dim * 3, config.d_model),
             nn.Tanh(),
-            RMSNorm(config.d_model)
+            ##RMSNorm(config.d_model)
         )
 
         latent_patch_dim = config.patch_dim // config.downscale_ratio
@@ -279,7 +279,7 @@ class LFViT(nn.Module):
             RMSNorm(latent_patch_dim * latent_patch_dim * 3),
             nn.Linear(latent_patch_dim * latent_patch_dim * 3, latent_dim),
             nn.Tanh(),
-            RMSNorm(latent_dim)
+            ##RMSNorm(latent_dim)
         )
 
         self.blocks = nn.ModuleList([ LFViTBlock(config) for _ in range(config.depth) ])
@@ -292,8 +292,8 @@ class LFViT(nn.Module):
                 pixel_values: torch.Tensor,
                 scaled_pixel_values: torch.Tensor):
                     
-        original = self.to_patch(pixel_values) / self.depth
-        x = self.to_latent(scaled_pixel_values) / self.depth
+        original = self.to_patch(pixel_values)
+        x = self.to_latent(scaled_pixel_values)
 
         for block in self.blocks:
             if self.gradient_checkpointing:
