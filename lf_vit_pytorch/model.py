@@ -268,7 +268,8 @@ class LFViT(nn.Module):
             Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1 = config.patch_dim, p2 = config.patch_dim),
             RMSNorm(config.patch_dim * config.patch_dim * 3),
             nn.Linear(config.patch_dim * config.patch_dim * 3, config.d_model),
-            nn.Sigmoid(),
+            nn.Tanh(),
+            nn.Linear(config.patch_dim * config.patch_dim * 3, config.d_model),
             RMSNorm(config.d_model)
         )
 
@@ -278,7 +279,8 @@ class LFViT(nn.Module):
             Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1 = latent_patch_dim, p2 = latent_patch_dim),
             RMSNorm(latent_patch_dim * latent_patch_dim * 3),
             nn.Linear(latent_patch_dim * latent_patch_dim * 3, latent_dim),
-            nn.Sigmoid(),
+            nn.Tanh(),
+            nn.Linear(latent_patch_dim * latent_patch_dim * 3, latent_dim),
             RMSNorm(latent_dim)
         )
 
