@@ -268,8 +268,8 @@ class LFViT(nn.Module):
             Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1 = config.patch_dim, p2 = config.patch_dim),
             RMSNorm(config.patch_dim * config.patch_dim * 3),
             nn.Linear(config.patch_dim * config.patch_dim * 3, config.d_model),
-            nn.Tanh(),
-            ##RMSNorm(config.d_model)
+            nn.Sigmoid(),
+            RMSNorm(config.d_model)
         )
 
         latent_patch_dim = config.patch_dim // config.downscale_ratio
@@ -278,8 +278,8 @@ class LFViT(nn.Module):
             Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1 = latent_patch_dim, p2 = latent_patch_dim),
             RMSNorm(latent_patch_dim * latent_patch_dim * 3),
             nn.Linear(latent_patch_dim * latent_patch_dim * 3, latent_dim),
-            nn.Tanh(),
-            ##RMSNorm(latent_dim)
+            nn.Sigmoid(),
+            RMSNorm(latent_dim)
         )
 
         self.blocks = nn.ModuleList([ LFViTBlock(config) for _ in range(config.depth) ])
