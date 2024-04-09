@@ -212,7 +212,7 @@ class LFViTBlock(nn.Module):
         self.ffn_norm = RMSNorm(dim, eps = config.norm_eps)
 
     def forward(self, x: torch.Tensor, original: torch.Tensor):
-        x = self.fft(x) + x
+        x = self.fft(x)
 
         x_norm = self.attn_norm(x)
         cross_x = self.cross_norm(original)
