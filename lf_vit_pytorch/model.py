@@ -266,18 +266,18 @@ class LFViT(nn.Module):
 
         self.to_patch = nn.Sequential(
             Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1 = config.patch_dim, p2 = config.patch_dim),
-            RMSNorm(config.patch_dim * config.patch_dim * 3),
+            nn.LayerNorm(config.patch_dim * config.patch_dim * 3), ##RMSNorm(config.patch_dim * config.patch_dim * 3),
             nn.Linear(config.patch_dim * config.patch_dim * 3, config.d_model),
-            RMSNorm(config.d_model)
+            nn.LayerNorm(config.d_model) ##RMSNorm(config.d_model)
         )
 
         latent_patch_dim = config.patch_dim // config.downscale_ratio
         latent_dim = config.d_model // config.downscale_ratio
         self.to_latent = nn.Sequential(
             Rearrange('b c (h p1) (w p2) -> b (h w) (p1 p2 c)', p1 = latent_patch_dim, p2 = latent_patch_dim),
-            RMSNorm(latent_patch_dim * latent_patch_dim * 3),
+            nn.LayerNorm(latent_patch_dim * latent_patch_dim * 3), ##RMSNorm(latent_patch_dim * latent_patch_dim * 3),
             nn.Linear(latent_patch_dim * latent_patch_dim * 3, latent_dim),
-            RMSNorm(latent_dim)
+            nn.LayerNorm(latent_dim) ##RMSNorm(latent_dim)
         )
 
         self.blocks = nn.ModuleList([ LFViTBlock(config) for _ in range(config.depth) ])
