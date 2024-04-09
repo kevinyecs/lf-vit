@@ -55,7 +55,7 @@ class PrepareForTrainer(nn.Module):
         scale_ratio = self.model.model_config.downscale_ratio
         scaled_shape = (pixel_values.shape[-2] // scale_ratio, pixel_values.shape[-1] // scale_ratio)
                     
-        if negative_pixel_values is None:
+        if negative_pixel_values is not None:
             scaled_pixel_values = F.interpolate(negative_pixel_values, size = scaled_shape, mode = self.interpolate_mode)
         else:
             scaled_pixel_values = F.interpolate(pixel_values, size = scaled_shape, mode = self.interpolate_mode)
