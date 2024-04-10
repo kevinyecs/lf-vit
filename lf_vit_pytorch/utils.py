@@ -46,6 +46,14 @@ class PrepareForTrainer(nn.Module):
             return self.loss_fn(logits, labels.float())
         elif self.classification_type == 'multiclass':
             return self.loss_fn(logits.view(-1, self.model.n_labels), labels.view(-1))
+
+     def print_trainable_parameters(self):
+            trainable_params, all_params = 0, 0
+            for _, param in self.model.named_parameters():
+                all_params += param.numel()
+                if param.requires_grad:
+                    trainable_params += param.numel()
+            print(f'trainable params: {trainable_params:,} | all params: {all_params:,} | trainable: {100 * trainable_params / all_params}%')
     
     def forward(self,
                 pixel_values: torch.Tensor,
