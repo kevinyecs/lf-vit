@@ -106,7 +106,7 @@ class FFT2D(nn.Module):
         super().__init__()
 
     def forward(self, x):
-        return torch.fft.fft(torch.fft.fft(x, dim = -1), dim = -2).real
+        return torch.fft.fft(torch.fft.fft(x.float(), dim = -1), dim = -2).real
 
 class XAttn(nn.Module):
     """
