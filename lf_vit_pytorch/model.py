@@ -278,7 +278,7 @@ class LFViT(nn.Module):
         self.norm = RMSNorm(config.d_model // config.downscale_ratio)
         self.to_labels = nn.Linear(config.d_model // config.downscale_ratio, config.n_labels, bias = False)
 
-        self.gradient_checkpointing = False
+        self.gradient_checkpointing = True
 
     def forward(self,
                 pixel_values: torch.Tensor,
