@@ -200,8 +200,8 @@ class LFViTBlock(nn.Module):
 
         self.fft = FFT2D()
         self.attn = XAttn(
-            q_dim = dim,
-            kv_dim = config.d_model,
+            q_dim = config.d_model,
+            kv_dim = dim,
             out_dim = dim,
             n_heads = config.n_heads,
             head_dim = 64,
