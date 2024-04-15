@@ -121,17 +121,19 @@ class XAttn(nn.Module):
     """
 
     def __init__(self,
-                 dim: int,
-                 other_dim: int,
-                 n_heads: int):
+                 q_dim: int,
+                 kv_dim: int,
+                 out_dim: int,
+                 n_heads: int = 8,
+                 head_dim: int = 64):
         super().__init__()
-        self.head_dim = other_dim // n_heads
+        self.head_dim = head_dim
         self.n_heads = n_heads
 
-        self.q_proj = nn.Linear(dim, self.head_dim * n_heads, bias = False)
-        self.k_proj = nn.Linear(other_dim, self.head_dim * n_heads, bias = False)
-        self.v_proj = nn.Linear(other_dim, self.head_dim * n_heads, bias = False)
-        self.o_proj = nn.Linear(self.head_dim * n_heads, dim, bias = False)
+        self.q_proj = nn.Linear(q_dim, self.head_dim * n_heads, bias = False)
+        self.k_proj = nn.Linear(kv_dim, self.head_dim * n_heads, bias = False)
+        self.v_proj = nn.Linear(kv_dim, self.head_dim * n_heads, bias = False)
+        self.o_proj = nn.Linear(self.head_dim * n_heads, out_dim, bias = False)
 
     def forward(self, x1, x2):
         q, k, v = self.q_proj(x1), self.k_proj(x2), self.v_proj(x2)
@@ -198,9 +200,11 @@ class LFViTBlock(nn.Module):
 
         self.fft = FFT2D()
         self.attn = XAttn(
-            dim = dim,
-            other_dim = config.d_model,
-            n_heads = config.n_heads
+            q_dim = dim,
+            kv_dim = config.d_model,
+            out_dim = dim,
+            n_heads = config.n_heads,
+            head_dim = 64,
         )
         self.ffn = SwiGLU(
             dim = dim,
@@ -216,7 +220,7 @@ class LFViTBlock(nn.Module):
         x = self.fft(x_norm) + x
         
         x_norm = self.attn_norm(x)
-        x = self.attn(x_norm, original) + x
+        x = self.attn(original, x_norm) + x
         
         x_norm = self.ffn_norm(x)
         x = self.ffn(x_norm) + x
