@@ -221,7 +221,7 @@ class LFViTBlock(nn.Module):
         x_norm = self.fft_norm(x)
         x = self.fft(x_norm) + x
 
-        z = nn.sigmoid(self.proj(x)) * z
+        z = F.Sigmoid(self.proj(x)) * z
         
         x_norm = self.attn_norm(x)
         x = self.attn(z, x_norm) + x
