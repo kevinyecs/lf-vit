@@ -105,6 +105,7 @@ class FFT2D(nn.Module):
     def __init__(self):
         super().__init__()
 
+    @torch.cuda.amp.autocast(enabled = False)
     def forward(self, x):
         return torch.fft.fft(torch.fft.fft(x.float(), dim = -1), dim = -2).real
 
