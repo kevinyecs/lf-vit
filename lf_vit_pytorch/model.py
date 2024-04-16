@@ -200,7 +200,7 @@ class LFViTBlock(nn.Module):
 
         self.fft = FFT2D()
         self.attn = XAttn(
-            q_dim = config.d_model // 2,
+            q_dim = config.d_model,
             kv_dim = dim,
             out_dim = dim,
             n_heads = config.n_heads,
@@ -211,7 +211,7 @@ class LFViTBlock(nn.Module):
             exp_factor = config.ffn_dim_mult
         )
 
-        self.proj = nn.Linear(config.d_model // 2, config.d_model // 2)
+        self.proj = nn.Linear(config.d_model, config.d_model)
 
         self.fft_norm = RMSNorm(dim, eps = config.norm_eps)
         self.attn_norm = RMSNorm(dim, eps = config.norm_eps)
